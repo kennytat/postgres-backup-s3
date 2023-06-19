@@ -58,6 +58,7 @@ if [ -n "${POSTGRES_DATABASES}" ]; then
 	for database in "$@"; do
 		echo processing database:: "${database}"
 		export POSTGRES_DATABASE="${database}"
+		export S3_PREFIX="${S3_PREFIX}/${database}"
 		backup
 	done
 else
