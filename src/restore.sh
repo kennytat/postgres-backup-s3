@@ -28,18 +28,19 @@ restore() {
 	if [ -n "$PASSPHRASE" ]; then
 		echo "Decrypting backup..."
 		gpg --decrypt --batch --passphrase "$PASSPHRASE" "${POSTGRES_DATABASE}.dump.gpg" >"${POSTGRES_DATABASE}.dump"
-		rm db.dump.gpg
+		rm "${POSTGRES_DATABASE}.dump.gpg"
 	fi
 
 	conn_opts="-h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DATABASE"
 
 	echo "Restoring from backup..."
 	pg_restore $conn_opts --clean --if-exists "${POSTGRES_DATABASE}.dump"
-	rm db.dump
+	rm "${POSTGRES_DATABASE}.dump"
 
 	echo "Restore complete."
 }
 
+S3_PREFIX_DEFAULT="${S3_PREFIX}"
 if [ -n "${POSTGRES_DATABASES}" ]; then
 	IFS=','                    # split on .
 	set -- $POSTGRES_DATABASES # split+glob with glob disabled.
@@ -47,7 +48,11 @@ if [ -n "${POSTGRES_DATABASES}" ]; then
 	for database in "$@"; do
 		echo processing database:: "${database}"
 		export POSTGRES_DATABASE="${database}"
-		export S3_PREFIX="${S3_PREFIX}/${database}"
+		if [ -n "${S3_PREFIX_DEFAULT}" ]; then
+			export S3_PREFIX="${S3_PREFIX_DEFAULT}/${database}"
+		else
+			export S3_PREFIX="${database}"
+		fi
 		restore
 	done
 else

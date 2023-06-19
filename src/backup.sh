@@ -51,6 +51,7 @@ backup() {
 	fi
 }
 
+S3_PREFIX_DEFAULT="${S3_PREFIX}"
 if [ -n "${POSTGRES_DATABASES}" ]; then
 	IFS=','                    # split on .
 	set -- $POSTGRES_DATABASES # split+glob with glob disabled.
@@ -58,7 +59,11 @@ if [ -n "${POSTGRES_DATABASES}" ]; then
 	for database in "$@"; do
 		echo processing database:: "${database}"
 		export POSTGRES_DATABASE="${database}"
-		export S3_PREFIX="${S3_PREFIX}/${database}"
+		if [ -n "${S3_PREFIX_DEFAULT}" ]; then
+			export S3_PREFIX="${S3_PREFIX_DEFAULT}/${database}"
+		else
+			export S3_PREFIX="${database}"
+		fi
 		backup
 	done
 else
